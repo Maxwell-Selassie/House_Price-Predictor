@@ -18,6 +18,7 @@ def housing_prices(training_filename='training set.csv',test_filename='test.csv'
     try:
         df = pd.read_csv(training_filename)
         test_df = pd.read_csv(test_filename)
+        test_ids = test_df['Id']
     except FileNotFoundError:
         print('File not found')
 
@@ -70,8 +71,8 @@ def housing_prices(training_filename='training set.csv',test_filename='test.csv'
     )
     #select hyperparameters for learning and training
     grid_params = {
-        'preprocessor__num__poly__degree' : [1,2,3],
-        'model__alpha' : [0.01,0.1,1.0,10.0,100.0]
+        'preprocessor__num__poly__degree' : [1,2],
+        'model__alpha' : [9.0,9.15,9.25,9.41]
     }
     grid = GridSearchCV(model,grid_params,cv=5,scoring='neg_mean_squared_error')
     #train mmodel
@@ -89,12 +90,13 @@ def housing_prices(training_filename='training set.csv',test_filename='test.csv'
 
     # print(f'Number features: {num_features[:5]}')
     # print(f'Categorical features: {cat_features[:5]}')
-    test_pred = grid.predict(test_x)
+    test_pred_log = grid.predict(test_x)
+    final_pred = np.expm1(test_pred_log)
 
     submission = pd.DataFrame(
         {
-            'Id': test_x.index,
-            'Saleprice': np.expm1(test_pred)
+            'Id': test_ids,
+            'Saleprice': final_pred
         }
     )
     submission.to_csv('submission.csv',index=False)
