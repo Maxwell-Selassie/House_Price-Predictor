@@ -7,8 +7,10 @@ from sklearn.metrics import r2_score,mean_squared_error
 from sklearn.preprocessing import StandardScaler,PolynomialFeatures,OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge
-from sklearn.impute import SimpleImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 from scipy.stats import skew,kurtosis
 def housing_prices(training_filename='training set.csv',test_filename='test.csv'):
     '''
@@ -50,7 +52,7 @@ def housing_prices(training_filename='training set.csv',test_filename='test.csv'
     cat_features = x.select_dtypes(include='object').columns.tolist()
     #perform eda on numerical values, replacing null values with median values and normalising numerical features
     numerical_transformers = Pipeline(steps=[
-        ('imputer',SimpleImputer(strategy='median')),
+        ('imputer',IterativeImputer(random_state=42)),
         ('scaler', StandardScaler()),
         ('poly',PolynomialFeatures(include_bias=False))]
     )
@@ -72,7 +74,7 @@ def housing_prices(training_filename='training set.csv',test_filename='test.csv'
     #select hyperparameters for learning and training
     grid_params = {
         'preprocessor__num__poly__degree' : [1,2],
-        'model__alpha' : [9.0,9.15,9.25,9.41]
+        'model__alpha' : [0.01,0.1,1.0,10.0]
     }
     grid = GridSearchCV(model,grid_params,cv=5,scoring='neg_mean_squared_error')
     #train mmodel
